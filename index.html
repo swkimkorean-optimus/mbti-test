@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>표준 MBTI 테스트</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .question-card {
+            transition: all 0.3s ease-in-out;
+            animation: fadeIn 0.4s forwards;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .radio-label:has(input:checked) {
+            background-color: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+    <div class="container mx-auto max-w-2xl w-full">
+        
+        <!-- 메인 메뉴 -->
+        <div id="main-menu" class="text-center transition-opacity duration-500 py-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 mb-4">표준 MBTI 테스트</h1>
+            <p class="text-gray-400 mb-8">30문항으로 알아보는 나의 성격 유형과 심층 분석</p>
+            <div class="flex justify-center">
+                <button onclick="startTest()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg transition duration-300 transform hover:scale-105">
+                    테스트 시작하기
+                </button>
+            </div>
+        </div>
+
+        <!-- 검사 화면 -->
+        <div id="test-view" class="hidden">
+            <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-700">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-700">
+                    <h2 id="test-title" class="text-2xl font-bold text-indigo-300">표준 MBTI 진단</h2>
+                    <span id="progress-indicator" class="text-xs text-gray-400 bg-gray-900 px-3 py-1 rounded-full">총 30문항</span>
+                </div>
+                
+                <div id="questions-container" class="space-y-6 max-h-[60vh] overflow-y-auto pr-3">
+                    <!-- JavaScript로 문항 동적 생성 -->
+                </div>
+                
+                <div class="mt-8 flex flex-col md:flex-row gap-4">
+                    <button id="submit-btn" onclick="calculateResult()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 px-6 rounded-xl transition duration-300 shadow-md hover:shadow-green-900/30">
+                        결과 확인하기
+                    </button>
+                    <button onclick="showMainMenu()" class="w-full md:w-1/3 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3.5 px-6 rounded-xl transition duration-300">
+                        처음으로
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 결과 모달 -->
+        <div id="result-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden z-50 backdrop-blur-sm">
+            <div id="modal-card" class="bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 relative border border-gray-700 transform transition-all duration-300 scale-95 opacity-0">
+                <button onclick="closeResult()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold p-1 leading-none">&times;</button>
+                
+                <div id="result-content" class="text-center">
+                    <p class="text-indigo-400 font-semibold tracking-wider text-sm">당신의 성격 유형</p>
+                    <h3 id="result-type" class="text-4xl md:text-5xl font-extrabold my-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400"></h3>
+                    <p id="result-subtitle" class="text-xl font-medium text-gray-300 mb-6"></p>
+                    <div id="result-description" class="text-left text-gray-300 space-y-4 bg-gray-900/50 p-5 rounded-xl border border-gray-700/50 leading-relaxed text-sm md:text-base">
+                        <!-- 설명 인젝션 -->
+                    </div>
+                </div>
+
+                <!-- 심층 분석 영역 (독립 실행형) -->
+                <div class="mt-8 border-t border-gray-700 pt-6">
+                    <h4 class="text-lg font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300">
+                        ✨ 맞춤 심층 분석 리포트
+                    </h4>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button onclick="renderInsight('growth')" class="flex-1 bg-indigo-950/70 hover:bg-indigo-900 text-indigo-200 border border-indigo-700/60 font-medium py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center gap-2">
+                            🌱 맞춤 성장 조언
+                        </button>
+                        <button onclick="renderInsight('jobs')" class="flex-1 bg-purple-950/70 hover:bg-purple-900 text-purple-200 border border-purple-700/60 font-medium py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center gap-2">
+                            💼 추천 직업 & 궁합
+                        </button>
+                    </div>
+
+                    <!-- 심층 분석 결과 창 -->
+                    <div id="gemini-result-container" class="mt-5 p-5 bg-gray-900 rounded-xl text-left border border-gray-700/60 hidden">
+                        <div id="gemini-result-content" class="text-gray-200 text-sm md:text-base space-y-3 leading-relaxed"></div>
+                    </div>
+                </div>
+
+                <button onclick="closeResult()" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl transition duration-300 shadow-lg">
+                    다시 테스트하기
+                </button>
+            </div>
+        </div>
+
+        <!-- 알림 팝업 -->
+        <div id="alert-box" class="fixed top-5 right-5 bg-red-600 text-white font-medium py-3 px-5 rounded-xl shadow-xl hidden transform transition-transform duration-300 translate-x-full z-50 border border-red-400">
+            <p>⚠️ 아직 응답하지 않은 문항이 있습니다!</p>
+        </div>
+
+    </div>
+
+    <script>
+        const standardQuestions = [
+            "나는 여러 사람들과 함께하는 활동을 즐기는 편입니다.",
+            "미래에 대한 계획을 미리 세우는 것을 좋아합니다.",
+            "현실적이고 구체적인 사실에 더 집중하는 경향이 있습니다.",
+            "새로운 사람을 만나는 것을 좋아하지만, 금세 지치기도 합니다.",
+            "중요한 결정을 내릴 때, 논리적이고 객관적인 이유를 중요하게 생각합니다.",
+            "갑작스러운 약속 변경이나 계획에 없는 일이 생기는 것에 불편함을 느낍니다.",
+            "주변 사람들의 감정에 쉽게 공감하고, 그들의 기분에 영향을 받습니다.",
+            "혼자만의 시간을 보내며 에너지를 충전하는 것을 즐깁니다.",
+            "복잡한 문제를 해결할 때, 직관에 의존하는 경우가 많습니다.",
+            "약속 시간을 철저히 지키려 노력하며, 늦는 것을 싫어합니다.",
+            "새로운 환경이나 모임에서 먼저 말을 걸기보다는 듣는 편입니다.",
+            "일상적인 대화보다는 심오하거나 추상적인 주제에 대해 이야기하는 것을 좋아합니다.",
+            "즉흥적으로 계획을 변경하거나 여행을 떠나는 것을 좋아합니다.",
+            "나는 여러 사람들과 함께하는 활동보다 소수의 친밀한 사람들과 시간을 보내는 것을 더 선호합니다.",
+            "감정에 휩쓸리기보다는 냉정하고 이성적으로 판단하는 편입니다.",
+            "해야 할 일의 목록을 만들고 순서대로 처리하는 것을 좋아합니다.",
+            "현실적인 경험보다는 상상력이 풍부한 이야기를 즐깁니다.",
+            "대화를 할 때, 내가 말하기보다는 상대방의 이야기를 듣는 것을 더 좋아합니다.",
+            "타인의 감정을 헤아리는 것이 나의 결정에 중요한 영향을 미칩니다.",
+            "정해진 규칙이나 절차를 따르는 것이 편하고 좋습니다.",
+            "나는 결정을 내리기 전에 가능한 모든 선택지를 탐색하는 것을 선호합니다.",
+            "다른 사람의 문제에 감정적으로 얽히기보다는 실질적인 해결책을 제안하는 편입니다.",
+            "나는 조용하고 한적한 곳에서 휴식을 취하는 것을 좋아합니다.",
+            "나는 나무보다 숲을 보는 경향이 있습니다. 즉, 세부사항보다 전체적인 그림을 봅니다.",
+            "나는 일을 시작하기 전에 명확한 계획과 일정이 있어야 마음이 편합니다.",
+            "나는 새로운 아이디어나 이론에 대해 토론하는 것을 즐깁니다.",
+            "나는 그룹 활동에서 주도적으로 의견을 내기보다는 다른 사람의 의견을 따르는 편입니다.",
+            "나는 동정심이 많다는 말을 자주 듣습니다.",
+            "나는 예측 가능한 일상에 안정감을 느낍니다.",
+            "나는 결정을 내릴 때 사실과 데이터에 근거하는 것이 중요하다고 생각합니다."
+        ];
+
+        const standardScoringMap = {
+            1: ['E', 'I'], 2: ['J', 'P'], 3: ['S', 'N'], 4: ['I', 'E'], 5: ['T', 'F'],
+            6: ['J', 'P'], 7: ['F', 'T'], 8: ['I', 'E'], 9: ['N', 'S'], 10: ['J', 'P'],
+            11: ['I', 'E'], 12: ['N', 'S'], 13: ['P', 'J'], 14: ['I', 'E'], 15: ['T', 'F'],
+            16: ['J', 'P'], 17: ['N', 'S'], 18: ['I', 'E'], 19: ['F', 'T'], 20: ['J', 'P'],
+            21: ['P', 'J'], 22: ['T', 'F'], 23: ['I', 'E'], 24: ['N', 'S'], 25: ['J', 'P'],
+            26: ['N', 'S'], 27: ['I', 'E'], 28: ['F', 'T'], 29: ['J', 'P'], 30: ['T', 'F']
+        };
+
+        const results = {
+            'ISTJ': { 
+                subtitle: '세상의 소금형 (청렴결백한 논리주의자)', 
+                description: `<p>책임감이 강하고 현실적인 당신은 조직에 없어서는 안 될 신뢰의 기둥입니다. 주어진 임무를 철저하고 꼼꼼하게 완수하며 매사에 흐트러짐이 없습니다.</p><p><strong class="text-indigo-400">강점:</strong> 뛰어난 집중력, 성실함, 약속을 반드시 지키는 신뢰성, 실용적인 문제 해결 능력.</p><p><strong class="text-indigo-400">보완점:</strong> 원칙에 지나치게 집착하여 융통성이 부족해질 수 있으므로, 새로운 관점에 마음을 여는 것이 유익합니다.</p>`,
+                growth: [
+                    "<strong>유연성 기르기:</strong> 예상치 못한 돌발 변수가 생겼을 때 규칙만을 고집하기보다 플랜 B를 유연하게 수용해 보세요.",
+                    "<strong>감정 표현 연습:</strong> 상대방에게 논리적인 피드백 외에도 따뜻한 공감의 한마디를 먼저 건네면 대인관계가 한결 부드러워집니다.",
+                    "<strong>스스로에게 여유 주기:</strong> 완벽한 계획 달성도 좋지만 가끔은 빈 스케줄을 만들어 휴식을 허락하세요."
+                ],
+                jobs: {
+                    recommendations: "회계사, 공무원, 법률 전문가, 데이터 분석가, 시스템 엔지니어",
+                    bestMatch: "ESFP, ESTP (서로의 현실감각을 공유하며 유쾌함을 보완해 주는 관계)"
+                }
+            },
+            'ISFJ': { 
+                subtitle: '임금 뒷편의 권력형 (용감한 수호자)', 
+                description: `<p>차분하고 따뜻한 배려심으로 타인을 묵묵히 돕는 헌신적인 성품을 지녔습니다. 세심한 관찰력으로 주위 사람들의 필요를 채워줍니다.</p><p><strong class="text-indigo-400">강점:</strong> 높은 공감 능력, 꼼꼼함, 안정적인 대인관계 유지력, 헌신적인 책임감.</p><p><strong class="text-indigo-400">보완점:</strong> 거절을 어려워해 본인에게 과도한 부담이 얹힐 수 있으니 자기주장 표현이 필요합니다.</p>`,
+                growth: [
+                    "<strong>건강한 거절 연습:</strong> 무리한 부탁은 정중히 거절하여 내 에너지를 먼저 지키는 경계선을 세우세요.",
+                    "<strong>속마음 표현하기:</strong> 갈등이 두려워 참기만 하면 서운함이 쌓입니다. 부드럽게 본인의 생각을 말해보세요.",
+                    "<strong>변화를 두려워 말기:</strong> 익숙함에서 벗어나는 새로운 기회도 긍정적으로 탐색해 보세요."
+                ],
+                jobs: {
+                    recommendations: "간호사/의료진, 초등교사, 사회복지사, 인사(HR) 담당자, 사서",
+                    bestMatch: "ESFP, ESTP (따뜻한 수호와 활기찬 에너지가 조화를 이루는 궁합)"
+                }
+            },
+            'INFJ': { 
+                subtitle: '예언자형 (통찰력 있는 선구자)', 
+                description: `<p>깊은 통찰력과 이상적인 신념을 바탕으로 세상을 더 긍정적으로 바꾸고자 하는 조용한 혁신가입니다.</p><p><strong class="text-indigo-400">강점:</strong> 사람의 본질을 꿰뚫는 직관력, 따뜻한 인류애, 창의적인 문제 해결력.</p><p><strong class="text-indigo-400">보완점:</strong> 완벽주의와 과도한 생각으로 번아웃이 오기 쉬우니 현실과 타협하는 연습이 필요합니다.</p>`,
+                growth: [
+                    "<strong>현실적인 기대치 설정:</strong> 나 자신과 타인에게 완벽을 요구하기보다 현재의 작은 진전에 감사해 보세요.",
+                    "<strong>머릿속 비우기:</strong> 과도한 생각에 매몰될 때는 산책이나 단순한 육체 활동으로 생각을 전환하세요.",
+                    "<strong>에너지 방전 관리:</strong> 내적 에너지가 소진되기 전에 혼자만의 힐링 시간을 정기적으로 확보하세요."
+                ],
+                jobs: {
+                    recommendations: "심리상담사, 작가/칼럼니스트, 기획자, 교육 디자이너, 예술 치료사",
+                    bestMatch: "ENFP, ENTP (서로의 깊은 생각과 아이디어를 막힘없이 나누는 영혼의 단짝)"
+                }
+            },
+            'INTJ': { 
+                subtitle: '과학자형 (용의주도한 전략가)', 
+                description: `<p>독립적이고 논리적인 사고로 장기적인 비전과 전략을 수립하는 데 탁월한 냉철한 지략가입니다.</p><p><strong class="text-indigo-400">강점:</strong> 거시적 안목, 고도의 논리 분석력, 강한 결단력과 추진력.</p><p><strong class="text-indigo-400">보완점:</strong> 타인의 감정이나 인간적인 교감을 비효율적인 것으로 간주해 독단적으로 보일 수 있습니다.</p>`,
+                growth: [
+                    "<strong>타인의 감정 인정하기:</strong> 인간관계에서는 논리만큼이나 공감과 인정이 중요한 열쇠임을 기억하세요.",
+                    "<strong>과정 즐기기:</strong> 최종 결과물뿐만 아니라 함께 일하는 팀원들과의 소통 과정에도 가치를 둬보세요.",
+                    "<strong>의견 경청하기:</strong> 내가 생각한 방식 외에도 다른 각도의 접근이 효과적일 수 있음을 열어두세요."
+                ],
+                jobs: {
+                    recommendations: "경영전략 컨설턴트, IT 소프트웨어 아키텍트, 투자분석가, 연구원",
+                    bestMatch: "ENFP, ENTP (지적 자극과 새로운 가능성을 열어주는 상호보완적 궁합)"
+                }
+            },
+            'ISTP': { 
+                subtitle: '백과사전형 (만능 재주꾼)', 
+                description: `<p>조용하지만 뛰어난 관찰력과 도구 활용 능력을 지닌 실용주의자입니다. 위기 상황에서 특히 침착합니다.</p><p><strong class="text-indigo-400">강점:</strong> 탁월한 순발력, 객관적인 상황 분석, 손재주 및 기술적 이해도.</p><p><strong class="text-indigo-400">보완점:</strong> 지나치게 장기적인 약속이나 틀에 갇힌 규율을 힘들어하며 감정 표현에 무색할 수 있습니다.</p>`,
+                growth: [
+                    "<strong>장기 계획 습관화:</strong> 단기적인 흥미 외에 1~3년 뒤의 장기 목표를 세우고 꾸준히 관리해 보세요.",
+                    "<strong>팀원과 소통하기:</strong> 혼자 해결하는 것이 편하더라도 진행 상황을 동료들에게 공유해 주세요.",
+                    "<strong>감정 공감 표현:</strong> 상대방의 고민에 해답만 던지기보다 마음을 먼저 들어주는 연습을 해보세요."
+                ],
+                jobs: {
+                    recommendations: "하드웨어 엔지니어, 항공/기계 정비사, 데이터 사이언티스트, 응급구조사",
+                    bestMatch: "ESFJ, ESTJ (체계적인 일상 관리와 현실적인 균형을 잡아주는 관계)"
+                }
+            },
+            'ISFP': { 
+                subtitle: '성인군자형 (호기심 많은 예술가)', 
+                description: `<p>온화하고 겸손하며 현재의 아름다움과 감각을 소중히 여기는 따뜻한 자유인입니다.</p><p><strong class="text-indigo-400">강점:</strong> 섬세한 심미안, 열린 마음, 갈등을 피하고 조화를 이루는 태도.</p><p><strong class="text-indigo-400">보완점:</strong> 결정을 미루거나 자기주장을 속으로 삭이는 경향이 있어 분명한 의사 표현이 필요합니다.</p>`,
+                growth: [
+                    "<strong>분명한 의사표현:</strong> 침묵으로 넘어가기보다 내가 원하는 바와 원치 않는 선을 분명히 밝히세요.",
+                    "<strong>실행 루틴 만들기:</strong> 즉흥적인 감정에만 의존하지 않고 매일 지킬 수 있는 루틴을 만들어 보세요.",
+                    "<strong>장기 재정/경력 계획:</strong> 미래를 위한 구체적인 로드맵을 천천히 준비해 두세요."
+                ],
+                jobs: {
+                    recommendations: "시각 디자이너, 플로리스트, 셰프, 물리치료사, 패션 머천다이저",
+                    bestMatch: "ESFJ, ESTJ (따뜻한 안정감을 제공하고 현실적 추진을 돕는 조합)"
+                }
+            },
+            'INFP': { 
+                subtitle: '잔다르크형 (열정적인 중재자)', 
+                description: `<p>자신의 내면 가치와 진정성을 중요하게 생각하며 타인의 아픔에 깊이 공감하는 낭만적 이상가입니다.</p><p><strong class="text-indigo-400">강점:</strong> 풍부한 창의력, 깊은 공감 능력, 독창적인 개성과 진실성.</p><p><strong class="text-indigo-400">보완점:</strong> 비판을 개인적인 상처로 받아들이기 쉬우며 현실적인 실행력이 다소 약할 수 있습니다.</p>`,
+                growth: [
+                    "<strong>객관적인 분리:</strong> 업무상 피드백을 내 인격에 대한 비판과 혼동하지 않고 객관적으로 분리하세요.",
+                    "<strong>작은 단위로 실행하기:</strong> 거대한 이상을 실현하기 위해 오늘 당장 할 수 있는 10분 단위 목표를 세우세요.",
+                    "<strong>경계선 유지:</strong> 타인의 부정적인 감정에 지나치게 감정이입하지 않도록 내면의 방어벽을 두세요."
+                ],
+                jobs: {
+                    recommendations: "작가/에디터, 브랜드 마케터, 카운슬러, 예술가, 콘텐츠 크리에이터",
+                    bestMatch: "ENFJ, ENTJ (비전을 현실로 구체화하도록 강력히 이끌어주는 최고의 조력자)"
+                }
+            },
+            'INTP': { 
+                subtitle: '아이디어 뱅크형 (논리적인 사색가)', 
+                description: `<p>끊임없는 지적 호기심으로 세상의 숨겨진 원리와 논리를 탐구하는 사색가입니다.</p><p><strong class="text-indigo-400">강점:</strong> 독창적인 사고, 복잡한 시스템 분석, 예리한 비판적 추론.</p><p><strong class="text-indigo-400">보완점:</strong> 아이디어는 넘치나 마무리 실행이 부족할 수 있고 타인의 감정 신호를 놓치기 쉽습니다.</p>`,
+                growth: [
+                    "<strong>마무리 끝맺음 연습:</strong> 아이디어 기획 단계에서 멈추지 않고 완성본을 세상에 내놓는 훈련을 하세요.",
+                    "<strong>쉬운 언어로 소통:</strong> 내 머릿속의 복잡한 논리를 다른 사람들이 이해하기 쉬운 언어로 풀어내세요.",
+                    "<strong>일상적인 교감 참여:</strong> 가벼운 스몰토크도 사회적 유대를 위해 필요한 윤활유임을 인정해 보세요."
+                ],
+                jobs: {
+                    recommendations: "소프트웨어 개발자, 금융 모델러, 대학 교수/연구원, 전략 분석가",
+                    bestMatch: "ENTJ, ENFJ (사색을 실행력으로 연결해주고 활력을 불어넣는 짝)"
+                }
+            },
+            'ESTP': { 
+                subtitle: '수완 좋은 활동가형 (모험을 즐기는 사업가)', 
+                description: `<p>직관적인 감각과 넘치는 에너지로 문제를 실시간으로 해결하는 행동파 승부사입니다.</p><p><strong class="text-indigo-400">강점:</strong> 뛰어난 위기 대응력, 현장 적응력, 매력적인 친화력과 대담함.</p><p><strong class="text-indigo-400">보완점:</strong> 장기적인 결과를 깊이 고민하지 않고 즉흥적으로 리스크를 감수할 위험이 있습니다.</p>`,
+                growth: [
+                    "<strong>한 템포 쉬어가기:</strong> 즉각 반응하기 전에 10초만 멈추고 장기적인 득실을 계산해 보세요.",
+                    "<strong>세부사항 챙기기:</strong> 큰 그림 뒤에 숨은 계약서 조항이나 일정 등 디테일을 꼼꼼히 점검하세요.",
+                    "<strong>경청의 자세:</strong> 내 주장을 펼치기 전에 상대방의 입장을 끝까지 들어주는 인내심을 길러보세요."
+                ],
+                jobs: {
+                    recommendations: "기업가/스타트업 대표, 영업 총괄, 마케팅 디렉터, 경찰관/소방관",
+                    bestMatch: "ISFJ, ISTJ (현실적인 기반과 안식처를 마련해 주는 든든한 조합)"
+                }
+            },
+            'ESFP': { 
+                subtitle: '사교적인 유형 (자유로운 영혼의 연예인)', 
+                description: `<p>주변 분위기를 밝고 화사하게 만드는 에너지를 지녔으며 현재를 즐길 줄 아는 사교가입니다.</p><p><strong class="text-indigo-400">강점:</strong> 탁월한 대인 친화력, 밝고 긍정적인 태도, 뛰어난 심미안과 감각.</p><p><strong class="text-indigo-400">보완점:</strong> 진지하거나 갈등이 생기는 상황을 회피하고 즉각적인 즐거움에만 치우칠 수 있습니다.</p>`,
+                growth: [
+                    "<strong>갈등 정면 돌파:</strong> 불편한 대화라도 회피하지 않고 진솔하게 마주하는 법을 배우세요.",
+                    "<strong>체계적인 재정/시간 계획:</strong> 충동구매나 즉흥적인 일정 변경을 방지하기 위한 기준을 세우세요.",
+                    "<strong>혼자만의 깊은 성찰:</strong> 늘 사람들과 어울리기보다 주 1회 정도는 조용히 자신을 돌아보세요."
+                ],
+                jobs: {
+                    recommendations: "이벤트 기획자, 방송인/크리에이터, 항공 승무원, 홍보 전문가, 레크리에이션 강사",
+                    bestMatch: "ISFJ, ISTJ (들뜬 에너지를 안정적으로 감싸주는 든든한 파트너)"
+                }
+            },
+            'ENFP': { 
+                subtitle: '스파크형 (재기발랄한 활동가)', 
+                description: `<p>창의적이고 열정적이며 사람과 아이디어 사이에서 무궁무진한 가능성을 찾아내는 분위기 메이커입니다.</p><p><strong class="text-indigo-400">강점:</strong> 풍부한 상상력, 사람을 이끄는 따뜻한 매력, 뛰어난 적응력과 영감.</p><p><strong class="text-indigo-400">보완점:</strong> 여러 일을 한꺼번에 벌여놓고 뒷심이 부족해 마무리를 짓지 못할 수 있습니다.</p>`,
+                growth: [
+                    "<strong>우선순위 3가지 법칙:</strong> 하루에 펼쳐놓을 일을 딱 3가지만 선정하고 끝까지 완수하세요.",
+                    "<strong>감정 기복 다스리기:</strong> 열정이 식었을 때도 꾸준히 이어갈 수 있는 시스템과 루틴을 만드세요.",
+                    "<strong>세부 체크리스트 활용:</strong> 번뜩이는 아이디어를 메모하고 현실적인 실행 단계로 쪼개어 관리하세요."
+                ],
+                jobs: {
+                    recommendations: "광고 카피라이터, 제품 기획자(PM), 상담 코치, 방송 프로듀서, 저널리스트",
+                    bestMatch: "INFJ, INTJ (서로의 상상력과 논리를 북돋우며 깊은 영적/지적 교감을 나누는 궁합)"
+                }
+            },
+            'ENTP': { 
+                subtitle: '발명가형 (뜨거운 논쟁을 즐기는 변론가)', 
+                description: `<p>두뇌 회전이 매우 빠르고 기발한 아이디어로 기존의 틀을 깨는 지적인 승부사입니다.</p><p><strong class="text-indigo-400">강점:</strong> 뛰어난 언변, 혁신적인 문제 해결 능력, 두려움 없는 도전정신.</p><p><strong class="text-indigo-400">보완점:</strong> 논쟁 자체를 즐기다 타인에게 상처를 줄 수 있고 단순 반복적인 작업을 기피합니다.</p>`,
+                growth: [
+                    "<strong>공감형 대화법:</strong> 논쟁에서 이기는 것보다 상대방의 감정을 존중하고 관계를 지키는 데 집중해 보세요.",
+                    "<strong>프로젝트 완결 습관:</strong> 새로운 아이디어가 떠올라도 현재 진행 중인 프로젝트를 마무리하고 넘어가세요.",
+                    "<strong>경청의 미덕:</strong> 상대의 말이 끝나기 전에 반박을 준비하지 말고 온전히 귀 기울여 보세요."
+                ],
+                jobs: {
+                    recommendations: "변호사, 벤처 투자자, 신사업 기획자, 정치 평론가, 크리에이티브 디렉터",
+                    bestMatch: "INFJ, INTJ (지적 호기심을 공유하며 방향성을 함께 잡아주는 찰떡궁합)"
+                }
+            },
+            'ESTJ': { 
+                subtitle: '사업가형 (엄격한 관리자)', 
+                description: `<p>질서와 체계를 바탕으로 프로젝트와 사람을 결단력 있게 이끄는 현실적인 리더입니다.</p><p><strong class="text-indigo-400">강점:</strong> 탁월한 추진력, 명확한 기준 설정, 뛰어난 조직 관리 및 실행 능력.</p><p><strong class="text-indigo-400">보완점:</strong> 자신의 방식만을 옳다고 여겨 타인에게 강요하거나 직설적인 말투로 긴장을 유발할 수 있습니다.</p>`,
+                growth: [
+                    "<strong>타인의 속도 존중:</strong> 나와 다른 방식으로 일하거나 속도가 느린 동료의 개별성도 인정해 주세요.",
+                    "<strong>부드러운 피드백:</strong> 성과 중심의 지적 전에 노력에 대한 인정과 칭찬을 한마디 덧붙여 보세요.",
+                    "<strong>변화에 대한 유연성:</strong> 전통적인 방식 외에 새로운 디지털 툴이나 창의적 접근을 시도해 보세요."
+                ],
+                jobs: {
+                    recommendations: "경영 관리자, 총무/운영 책임자, 금융 지점장, 프로젝트 총괄 매니저",
+                    bestMatch: "ISFP, ISTP (상호 부족한 감성과 유연성을 채워주며 조화를 이루는 관계)"
+                }
+            },
+            'ESFJ': { 
+                subtitle: '친선도모형 (사교적인 외교관)', 
+                description: `<p>사람에 대한 따뜻한 관심과 헌신으로 공동체의 화합을 이끌어내는 다정한 분위기 메이커입니다.</p><p><strong class="text-indigo-400">강점:</strong> 뛰어난 친화력, 충실한 책임감, 조화로운 팀워크 형성 능력.</p><p><strong class="text-indigo-400">보완점:</strong> 타인의 시선과 인정에 지나치게 집착하여 내면의 피로도가 누적될 수 있습니다.</p>`,
+                growth: [
+                    "<strong>스스로 인정하기:</strong> 남들의 칭찬에만 기대지 않고 내 스스로를 온전히 칭찬하는 자존감을 키우세요.",
+                    "<strong>모두를 만족시킬 수 없음을 수용:</strong> 누군가의 비판이나 불만에 일희일비하지 마세요.",
+                    "<strong>객관적인 비판 수용:</strong> 감정적으로 상처받기보다 일의 발전을 위한 조언으로 쿨하게 넘겨보세요."
+                ],
+                jobs: {
+                    recommendations: "호텔/서비스 매니저, 초중고 교사, 고객경험(CX) 디렉터, 이벤트 디렉터",
+                    bestMatch: "ISFP, ISTP (안정적이고 편안한 휴식과 현실적 지지를 나눌 수 있는 관계)"
+                }
+            },
+            'ENFJ': { 
+                subtitle: '언변능숙형 (정의로운 주인공)', 
+                description: `<p>카리스마와 따뜻한 진심으로 타인의 성장을 돕고 공동의 선을 이루어가는 이상주의적 리더입니다.</p><p><strong class="text-indigo-400">강점:</strong> 뛰어난 대중 소통력, 강력한 동기부여 능력, 높은 감성 지능.</p><p><strong class="text-indigo-400">보완점:</strong> 타인의 문제를 지나치게 떠안아 감정적으로 번아웃이 오거나 과도하게 이상화할 수 있습니다.</p>`,
+                growth: [
+                    "<strong>건강한 거리두기:</strong> 타인의 짐을 대신 짊어지려 하지 말고 그들 스스로 해결할 수 있도록 지켜봐 주세요.",
+                    "<strong>객관적 현실 직시:</strong> 지나친 낙관주의보다는 발생 가능한 위험 요소도 꼼꼼히 체크하세요.",
+                    "<strong>자신을 위한 시간 투자:</strong> 남들을 돌보느라 소진된 나 자신만을 위한 온전한 충전 시간을 확보하세요."
+                ],
+                jobs: {
+                    recommendations: "교육 기획자, 조직문화 코치, 비영리단체 디렉터, 인사(HR) 팀장, 방송 앵커",
+                    bestMatch: "INFP, ISFP (서로의 가치관을 지지하며 깊은 교감을 이룰 수 있는 궁합)"
+                }
+            },
+            'ENTJ': { 
+                subtitle: '지도자형 (대담한 통솔자)', 
+                description: `<p>원대한 비전과 단호한 결단력으로 목표를 향해 조직을 일사불란하게 이끄는 타고난 리더입니다.</p><p><strong class="text-indigo-400">강점:</strong> 전략적 통찰력, 불도저 같은 추진력, 명확한 의사결정력과 효율성.</p><p><strong class="text-indigo-400">보완점:</strong> 성과 중심적 태도로 인해 구성원들의 정서적 피로감을 간과하고 오만하게 비칠 수 있습니다.</p>`,
+                growth: [
+                    "<strong>구성원 감정 챙기기:</strong> 프로젝트의 성공만큼이나 팀원들의 정서적 만족도를 케어해 보세요.",
+                    "<strong>비판적 경청:</strong> 나의 생각과 다른 반대 의견 속에서도 숨겨진 통찰을 발견하려는 여유를 가지세요.",
+                    "<strong>실수 포용하기:</strong> 자신과 타인의 실수를 즉시 질책하기보다 성장의 기회로 전환해 보세요."
+                ],
+                jobs: {
+                    recommendations: "경영진(CEO), 사모펀드 매니저, 경영전략 컨설턴트, 벤처 빌더",
+                    bestMatch: "INFP, INTP (창의적인 발상과 전략적 추진이 만나 시너지를 내는 최상의 콤비)"
+                }
+            }
+        };
+
+        let currentMbtiType = ''; 
+        const mainMenu = document.getElementById('main-menu');
+        const testView = document.getElementById('test-view');
+        const questionsContainer = document.getElementById('questions-container');
+        const resultModal = document.getElementById('result-modal');
+        const modalCard = document.getElementById('modal-card');
+        const alertBox = document.getElementById('alert-box');
+        const geminiResultContainer = document.getElementById('gemini-result-container');
+        const geminiResultContent = document.getElementById('gemini-result-content');
+
+        function startTest() {
+            mainMenu.classList.add('hidden');
+            testView.classList.remove('hidden');
+            loadQuestions();
+        }
+
+        function showMainMenu() {
+            testView.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+            questionsContainer.innerHTML = '';
+        }
+
+        function loadQuestions() {
+            questionsContainer.innerHTML = '';
+            standardQuestions.forEach((q, index) => {
+                const questionNumber = index + 1;
+                const card = document.createElement('div');
+                card.className = 'question-card bg-gray-700/60 p-5 rounded-xl border border-gray-700 hover:border-gray-600 transition';
+                
+                card.innerHTML = `
+                    <p class="text-base md:text-lg font-medium mb-4 leading-relaxed">
+                        <span class="text-indigo-400 font-bold mr-1">${questionNumber}.</span> ${q}
+                    </p>
+                    <div class="flex gap-3">
+                        <label class="radio-label flex-1 cursor-pointer text-center py-2.5 px-4 border border-gray-600 rounded-lg transition font-medium hover:bg-gray-600">
+                            <input type="radio" name="q${questionNumber}" value="yes" class="hidden"> 네 (그렇다)
+                        </label>
+                        <label class="radio-label flex-1 cursor-pointer text-center py-2.5 px-4 border border-gray-600 rounded-lg transition font-medium hover:bg-gray-600">
+                            <input type="radio" name="q${questionNumber}" value="no" class="hidden"> 아니오 (아니다)
+                        </label>
+                    </div>
+                `;
+                questionsContainer.appendChild(card);
+            });
+        }
+        
+        function showAlert() {
+            alertBox.classList.remove('hidden', 'translate-x-full');
+            alertBox.classList.add('translate-x-0');
+            setTimeout(() => {
+                alertBox.classList.remove('translate-x-0');
+                alertBox.classList.add('translate-x-full');
+                setTimeout(() => alertBox.classList.add('hidden'), 300);
+            }, 2500);
+        }
+
+        function calculateResult() {
+            const questionCount = standardQuestions.length;
+            const answers = [];
+            
+            for (let i = 1; i <= questionCount; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if (!selected) {
+                    showAlert();
+                    // 미답변 문항으로 스크롤 이동
+                    const unansweredElem = document.querySelector(`input[name="q${i}"]`)?.closest('.question-card');
+                    if (unansweredElem) {
+                        unansweredElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return;
+                }
+                answers.push(selected.value);
+            }
+
+            const scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+            answers.forEach((answer, index) => {
+                const questionNumber = index + 1;
+                const mapping = standardScoringMap[questionNumber];
+                const scoreKey = answer === 'yes' ? mapping[0] : mapping[1];
+                scores[scoreKey]++;
+            });
+
+            let resultType = '';
+            resultType += scores.E >= scores.I ? 'E' : 'I';
+            resultType += scores.S >= scores.N ? 'S' : 'N';
+            resultType += scores.T >= scores.F ? 'T' : 'F';
+            resultType += scores.J >= scores.P ? 'J' : 'P';
+            
+            displayResult(resultType);
+        }
+
+        function displayResult(type) {
+            currentMbtiType = type;
+            geminiResultContainer.classList.add('hidden');
+            geminiResultContent.innerHTML = '';
+
+            const resultData = results[type];
+            document.getElementById('result-type').textContent = type;
+            document.getElementById('result-subtitle').textContent = resultData.subtitle;
+            document.getElementById('result-description').innerHTML = resultData.description;
+
+            resultModal.classList.remove('hidden');
+            setTimeout(() => {
+                modalCard.classList.remove('scale-95', 'opacity-0');
+                modalCard.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        // 외부 API 대신 내장 데이터를 이용해 즉각 렌더링 (독립 실행형)
+        function renderInsight(type) {
+            if (!currentMbtiType) return;
+            const data = results[currentMbtiType];
+            if (!data) return;
+
+            geminiResultContainer.classList.remove('hidden');
+
+            if (type === 'growth') {
+                const listItems = data.growth.map(item => `<li class="pl-2 list-disc">${item}</li>`).join('');
+                geminiResultContent.innerHTML = `
+                    <h5 class="font-bold text-indigo-300 mb-2 flex items-center gap-1.5 text-base">🌱 ${currentMbtiType} 유형을 위한 성장 맞춤 조언</h5>
+                    <ul class="space-y-2 text-gray-300 ml-4">
+                        ${listItems}
+                    </ul>
+                `;
+            } else if (type === 'jobs') {
+                geminiResultContent.innerHTML = `
+                    <h5 class="font-bold text-purple-300 mb-2 flex items-center gap-1.5 text-base">💼 ${currentMbtiType} 유형 맞춤 직업 및 파트너</h5>
+                    <div class="space-y-3 text-gray-300">
+                        <p><strong class="text-white">추천 직무/직업군:</strong> ${data.jobs.recommendations}</p>
+                        <p><strong class="text-white">최상의 시너지 궁합:</strong> ${data.jobs.bestMatch}</p>
+                    </div>
+                `;
+            }
+            geminiResultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function closeResult() {
+            modalCard.classList.remove('scale-100', 'opacity-100');
+            modalCard.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                resultModal.classList.add('hidden');
+                showMainMenu();
+            }, 250);
+        }
+    </script>
+</body>
+</html>
